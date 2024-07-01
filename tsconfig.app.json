@@ -21,7 +21,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* 明示的に追記 */
+    "noImplicitAny":false,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"]
 }
