@@ -1,49 +1,29 @@
 import { useState } from 'react';
 import { Flex, View, Text, Button, Icon } from '@aws-amplify/ui-react';
-import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
-import { fetchAuthSession } from 'aws-amplify/auth';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../amplify/data/resource';
 
-import output from '../amplify_outputs.json';
+import { useNavigate } from 'react-router-dom';
 
 export default function Menu( { signOut }) {
 
-    const [text, setText] = useState('翻訳する');
-    const initialFormState = { Text: '' };
-    
-    const [formState, setFormState] =  useState(initialFormState);
+    const nagigate = useNavigate();
+    const handleCreateMeeting = () => nagigate('/createMeeting');
 
+    const [mytext, setText] = useState('吾輩は猫である。名前はまだない。');
+
+    // 翻訳APIを呼び出す
     async function invokeSendTranslate() {
-        // アクセスキー、シークレットアクセス、セッショントークンを取得
-        const { credentials } = await fetchAuthSession();
+        // スキーマを定義
+        const client = generateClient<Schema>();
 
-        const setInput = (key, value) => {
-            setFormState({ ...formState, [key]: value });
-        }
+        const { data } = await client.queries.translate({
+            text: mytext,
+            sourceLanguage: 'ja',
+            targetLanguage: 'en'
+        });
 
-        setInput('text', text);
-        //setText('翻訳中...');
-
-        // リージョンと関数名を取得
-        const awsResion = output.auth.aws_region;
-        const functionName = output.custom.sendTranslateFunctionName;
-
-        //Lamda関数を呼び出す
-        const lambda = new LambdaClient({ credentials: credentials, region: awsResion });
-        const command =new InvokeCommand({ 
-            FunctionName: functionName, 
-            Payload: Buffer.from(JSON.stringify('text : テスト'))
-         });
-        const apiResponse = await lambda.send(command);
-
-        if(apiResponse.Payload){
-            const payload = JSON.parse(new TextDecoder().decode(apiResponse.Payload));
-            setText(payload.message + 'success');
-            console.log(payload.message);
-        }
-        else{
-            setText('エラーが発生しました');
-            console.log('エラーが生しました');
-        }
+        setText(data || '翻訳できませんでした');
     }
 
     return (
@@ -116,7 +96,7 @@ export default function Menu( { signOut }) {
                 variation="primary"
                 onClick={invokeSendTranslate}
                 >
-                {text}
+                {mytext}
                 </Button>
             </Flex>
             
@@ -133,9 +113,9 @@ export default function Menu( { signOut }) {
                 width="245px"
                 height="37px"
                 shrink="0"
-                //size="default"
                 isDisabled={false}
                 variation="primary"
+                onClick={handleCreateMeeting}
                 >
                 ミーティング登録
                 </Button>

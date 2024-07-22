@@ -4,6 +4,6 @@ export const preSignUp = defineFunction({
   name: 'pre-sign-up',
   // optionally define an environment variable for your filter
   environment: {
-    ALLOW_DOMAIN: 'amazon.com'
+    ALLOW_DOMAIN: 'outlook.jp'
   }
 });
