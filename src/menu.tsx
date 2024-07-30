@@ -1,30 +1,31 @@
 import { useState } from 'react';
 import { Flex, View, Text, Button, Icon } from '@aws-amplify/ui-react';
-import { generateClient } from 'aws-amplify/data';
-import type { Schema } from '../amplify/data/resource';
+// import { generateClient } from 'aws-amplify/data';
+// import type { Schema } from '../amplify/data/resource';
 
 import { useNavigate } from 'react-router-dom';
 
 export default function Menu( { signOut }) {
 
-    const nagigate = useNavigate();
-    const handleCreateMeeting = () => nagigate('/createMeeting');
+    const navigate = useNavigate();
+    const handleCreateMeeting = () => navigate('/createMeeting');
+    const handleDeviceSetting = () => navigate('/deviceSetting');
 
     const [mytext, setText] = useState('吾輩は猫である。名前はまだない。');
 
     // 翻訳APIを呼び出す
-    async function invokeSendTranslate() {
-        // スキーマを定義
-        const client = generateClient<Schema>();
+    // async function invokeSendTranslate() {
+    //     // スキーマを定義
+    //     const client = generateClient<Schema>();
 
-        const { data } = await client.queries.translate({
-            text: mytext,
-            sourceLanguage: 'ja',
-            targetLanguage: 'en'
-        });
+    //     const { data } = await client.queries.translate({
+    //         text: mytext,
+    //         sourceLanguage: 'ja',
+    //         targetLanguage: 'en'
+    //     });
 
-        setText(data || '翻訳できませんでした');
-    }
+    //     setText(data || '翻訳できませんでした');
+    // }
 
     return (
         <Flex
@@ -94,7 +95,7 @@ export default function Menu( { signOut }) {
                 shrink="0"
                 isDisabled={false}
                 variation="primary"
-                onClick={invokeSendTranslate}
+                onClick={handleDeviceSetting}
                 >
                 {mytext}
                 </Button>

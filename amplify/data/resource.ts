@@ -9,9 +9,9 @@ const translateHandler = defineFunction({
 const schema = a.schema({
   MeetingManagement: a
     .model({
-      meetingID: a.string(),
-      innerMeetingID: a.string(),
-      chimeMeetingStatus: a.string(),
+      id: a.string(),
+      innerMeetingID: a.string().default('000000'),
+      chimeMeetingStatus: a.string().default('unused'),
       meetingPassword: a.string(),
     })
     .authorization((allow) => [allow.publicApiKey()]),

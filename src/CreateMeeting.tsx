@@ -24,22 +24,29 @@ function CreateMeeting() {
     // ミーティングを作成
     const createMeeting = async () => {
 
+        let createMeetingIdString = '000001';
+
         fetchMeetings();
 
         meetings.map((meeting) => {
-            console.log(meeting.meetingID);
+            const createMeetingIdNumber = Number(meeting.id) + 1;
+            createMeetingIdString = String(createMeetingIdNumber).padStart(6, '0');
         })
 
 
 
         await client.models.MeetingManagement.create({
-            meetingID: '1',
-            innerMeetingID: '000000',
-            chimeMeetingStatus: 'unused',
+            id: createMeetingIdString,
             meetingPassword: inputMeetingPassword,
         });
 
         
+    }
+
+    // ミーティングを削除
+    const deleteMeeting = async (meetingID: string) => {
+        await client.models.MeetingManagement.delete({id: meetingID});
+        fetchMeetings();
     }
 
     return (
@@ -112,7 +119,7 @@ function CreateMeeting() {
         </Text>
         <ul>
             {meetings.map((meeting) => (
-                <li key={meeting.meetingID}>{meeting.meetingPassword}</li>
+                <li key={meeting.meetingID}>{meeting.meetingID}</li>
             ))}
         </ul>
     </Flex>
