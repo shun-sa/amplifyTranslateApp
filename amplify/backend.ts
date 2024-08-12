@@ -54,7 +54,6 @@ authenticatedUserIamRole.addToPrincipalPolicy(
 //翻訳機能を追加
 backend.addOutput({
   custom: {
-    registerMeetingFunctionName: backend.registerMeeting.resources.lambda.functionName,
     Predictions: {
       convert:{
         // 翻訳機能のデフォルト設定

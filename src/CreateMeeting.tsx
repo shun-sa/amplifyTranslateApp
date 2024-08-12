@@ -5,16 +5,17 @@ import { useEffect, useState} from "react";
 
 function CreateMeeting() {
 
-    const [inputMeetingPassword, setMeetingId] = useState<string>('default');
-
     const client = generateClient<Schema>();
 
     const [meetings, setMeetings] = useState<Schema['MeetingManagement']['type'][]>([]);
+    const [createMeetingIdString, setCreateMeetingIdString] = useState<string>('');
+    const [inputMeetingPassword, setMeetingId] = useState<string>('default');
 
     // ミーティング一覧を取得
     const fetchMeetings = async () => {
         const {data: items, errors } = await client.models.MeetingManagement.list();
         setMeetings(items);
+        console.log(errors);
     }
 
     useEffect(() => {
@@ -24,23 +25,23 @@ function CreateMeeting() {
     // ミーティングを作成
     const createMeeting = async () => {
 
-        let createMeetingIdString = '000001';
-
+        // ミーティング情報を取得
         fetchMeetings();
 
+        // ミーティングIDを生成
         meetings.map((meeting) => {
-            const createMeetingIdNumber = Number(meeting.id) + 1;
-            createMeetingIdString = String(createMeetingIdNumber).padStart(6, '0');
+            const createMeetingIdNumber = Number(meeting.meetingId) + 1;
+            setCreateMeetingIdString(createMeetingIdNumber.toString().padStart(6, '0'));
         })
 
-
-
+        // ミーティングを登録
         await client.models.MeetingManagement.create({
-            id: createMeetingIdString,
+            meetingId: createMeetingIdString,
             meetingPassword: inputMeetingPassword,
         });
 
-        
+
+        //deleteMeeting('7dd525df-7715-4504-ab26-4cbb154d398f');
     }
 
     // ミーティングを削除
@@ -119,7 +120,17 @@ function CreateMeeting() {
         </Text>
         <ul>
             {meetings.map((meeting) => (
-                <li key={meeting.meetingID}>{meeting.meetingID}</li>
+                <li key={meeting.meetingId}>{meeting.meetingId}</li>
+            ))}
+        </ul>
+        <ul>
+            {meetings.map((meeting) => (
+                <li key={meeting.id}>{meeting.id}</li>
+            ))}
+        </ul>
+        <ul>
+            {meetings.map((meeting) => (
+                <li key={meeting.meetingPassword}>{meeting.meetingPassword}</li>
             ))}
         </ul>
     </Flex>

@@ -1,22 +1,34 @@
 import { type ClientSchema, a, defineData, defineFunction } from '@aws-amplify/backend';
-
-// 翻訳機能のLambda関数を定義
-const translateHandler = defineFunction({
-  entry: './translate-handler/handler.ts',
-})
+import { registerMeeting } from '../functions/register-meeting/resource';
+import { ChimeSDKMeetings } from '@aws-sdk/client-chime-sdk-meetings';
 
 // スキーマを定義
 const schema = a.schema({
+  // MeetingManagementモデルを定義
   MeetingManagement: a
     .model({
       id: a.string(),
-      innerMeetingID: a.string().default('000000'),
+      meetingId: a.string().default('000000'),
+      chimeMeetingInfo: a.json(),
       chimeMeetingStatus: a.string().default('unused'),
       meetingPassword: a.string(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
-  //translateAPIを定義
-  translate: a.query()
+  // ChimeMeeting登録Lambda関数を定義
+  registerMeeting: a
+    .query()
+    .arguments({
+      id: a.string().required(),
+      meetingId: a.string().required(),
+      chimeMeetingInfo: a.json().required(),
+      chimeMeetingStatus: a.string().required(),
+    })
+    .returns(a.string())
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(a.handler.function(registerMeeting)),
+  // translateAPIを定義
+  translate: a
+    .query()
     .arguments({
       sourceLanguage: a.string().required(),
       targetLanguage: a.string().required(),

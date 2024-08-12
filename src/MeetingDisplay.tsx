@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { SpeechRecognizer, AudioConfig, SpeechConfig, SpeakerAudioDestination } from 'microsoft-cognitiveservices-speech-sdk';
+import { generateClient } from 'aws-amplify/data';
+import { type Schema } from '../amplify/data/resource';
+import { ConsoleLogger, DefaultDeviceController, DefaultMeetingSession, LogLevel, MeetingSessionConfiguration, MeetingSessionStatusCode } from 'amazon-chime-sdk-js'
+
 
 // 引数受け取りのためのインターフェースを定義
 interface MeetingDisplayProps { 
+    chimeMeetingInfo: Object;
+    attendee: Object;
     selectedMicrophoneId: string;
     selectedSpeakerId: string;
 }
@@ -13,8 +19,15 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = (MeetingDisplayProps) => {
     const [isTranslationOn, setTranslationOn] = useState(false);
     const [speechText, setSpeechText] = useState<string>('');
 
+    // Chime設定
+    // const chime = new Chime({
+    //     region: 'us-east-1',
+    //     endpoint: 'service.chime.aws.amazon.com',
+    // });
+
     useEffect(() => {
         invokeSendSpeechToText();
+        joinChimeMeeting();
     }, []);
 
     // マイクからの音声入力をazure cognitive speech serviceに送信してテキストに変換する
@@ -46,6 +59,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = (MeetingDisplayProps) => {
         speechRecognizer.recognized = (s, e) => {
             //console.log(`Recognized: ${e.result.text}`);
             setSpeechText(e.result.text);
+            sendTranslate(e.result.text);
         };
 
         // 音声認識が中断された際の処理
@@ -63,16 +77,72 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = (MeetingDisplayProps) => {
         speechRecognizer.startContinuousRecognitionAsync(); 
     }
 
+    // 翻訳APIを呼び出す
+    async function sendTranslate(speakingText: string) {
+        // スキーマを定義
+        const client = generateClient<Schema>();
+
+        const { data } = await client.queries.translate({
+            text: speakingText,
+            sourceLanguage: 'ja',
+            targetLanguage: 'en'
+        });
+
+        //setText(data || '翻訳できませんでした');
+    }
+
+    // Chimeミーティングに参加する
+    async function joinChimeMeeting() {
+        //let response = await $axios.get(createMeetingUrl);
+        var logger = new ConsoleLogger('MyLogger', LogLevel.INFO);
+        var deviceController = new DefaultDeviceController(logger);
+        console.log('deviceController', deviceController);
+
+        //ミーティングセッションの設定
+        var configuration = new MeetingSessionConfiguration(MeetingDisplayProps.chimeMeetingInfo, MeetingDisplayProps.attendee);
+        var meetingSession = new DefaultMeetingSession(configuration, logger, deviceController);
+
+        // 入出力デバイスの設定
+        meetingSession.audioVideo.chooseAudioOutput(MeetingDisplayProps.selectedSpeakerId);
+
+        // observerの設定
+        meetingSession.audioVideo.addObserver({
+            audioVideoDidStart: () => {
+                console.log('audioVideoDidStart');
+            },
+            audioVideoDidStop: (sessionStatus) => {
+                console.log('audioVideoDidStop', sessionStatus);
+            },
+            audioVideoDidStartConnecting: (reconnecting) => {
+                console.log('audioVideoDidStartConnecting', reconnecting);
+            },
+        });
+
+        // ミーティングセッションを開始
+        meetingSession.audioVideo.start();
+    }
+
+    // Chimeミーティングから退室する
+    function leaveChimeMeeting() {
+        //observerの設定
+        var observer = {
+            audioVideoDidStop: (sessionStatus) => {
+                var sessionStatusCode = sessionStatus.statusCode();
+                if (sessionStatusCode === MeetingSessionStatusCode.Left) {
+                    alert('ミーティングを退室しました。');
+                } else {
+                    alert('セッションが切れました。ステータスコード： ' + sessionStatusCode);
+                }
+            }
+        };
+    }
+
     const handleMicrophoneToggle = () => {
         setMicrophoneOn((prev) => !prev);
     };
 
     const handleTranslationToggle = () => {
         setTranslationOn((prev) => !prev);
-    };
-
-    const handleBackButtonClick = () => {
-        // Handle back button click logic here
     };
 
     return (
@@ -83,7 +153,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = (MeetingDisplayProps) => {
                 </button>
                 <button onClick={invokeSendSpeechToText}>Send</button>
 
-                <button onClick={handleBackButtonClick}>Back</button>
+                <button onClick={leaveChimeMeeting}>退室する</button>
                 <button onClick={handleTranslationToggle}>
                     {isTranslationOn ? 'Turn Translation Off' : 'Turn Translation On'}
                 </button>         

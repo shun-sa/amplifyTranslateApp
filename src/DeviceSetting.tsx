@@ -2,7 +2,13 @@ import { Flex, View, Icon, SelectField, Button } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function DeviceSetting() {
+// 引数受け取りのためのインターフェースを定義
+interface DeviceSettingProps {
+    meeting: Object; 
+    attendee: Object;
+}
+
+const DeviceSetting: React.FC<DeviceSettingProps> = (DeviceSettingProps) => {
     
     // マイクとスピーカーの一覧を保持する
     const [microphones, setMicrophones] = useState<string[]>([]);
@@ -13,12 +19,13 @@ function DeviceSetting() {
     const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
 
     const navigate = useNavigate();
+    const handleMeetingDisplay = (selectedMicrophoneId, selectedSpeakerId) => navigate('/meeting', {state: {chimeMeetingInfo: DeviceSettingProps.meeting,attendee: DeviceSettingProps.attendee, selectedMicrophoneId: selectedMicrophoneId, selectedSpeakerId: selectedSpeakerId}});
 
     // デバイスの一覧を保持する
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
 
     // ミーティング画面に遷移する
-    function handleMeetingDisplay () {
+    function setMeetingDevice () {
 
         // マイクとスピーカーが選択されていない場合はアラートを表示する
         if (!selectedMicrophone || !selectedSpeaker) {
@@ -35,7 +42,7 @@ function DeviceSetting() {
         console.log(selectedSpeakerId);
 
         // マイクとスピーカーのデバイスIDを渡してミーティング画面に遷移する
-        navigate('/meeting', {state: {selectedMicrophoneId, selectedSpeakerId}});
+        handleMeetingDisplay(selectedMicrophoneId, selectedSpeakerId);
     } 
     
     // マイクとスピーカーの一覧を取得する
@@ -135,7 +142,7 @@ function DeviceSetting() {
             shrink="0"
             isDisabled={false}
             variation="primary"
-            onClick={handleMeetingDisplay}
+            onClick={setMeetingDevice}
             >
             ミーティングに参加
             </Button>

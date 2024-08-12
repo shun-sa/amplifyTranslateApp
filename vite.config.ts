@@ -7,5 +7,8 @@ export default defineConfig({
   server: {  
     port: 8080,  // ここを追加
     strictPort: true // ここを追加
-  }
+  },
+  define: {
+    global: 'window',
+  },
 })

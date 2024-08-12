@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-amplify/predictions": "^6.1.12",
     "@aws-amplify/ui-react": "^6.1.12",
+    "@aws-sdk/client-chime-sdk-meetings": "^3.624.0",
     "@aws-sdk/client-translate": "^3.614.0",
     "amazon-chime-sdk-component-library-react": "^3.8.0",
     "amazon-chime-sdk-js": "^3.23.0",
