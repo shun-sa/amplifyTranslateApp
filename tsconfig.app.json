@@ -29,5 +29,5 @@
   },
   /* アプリケーション側の参照範囲設定 */
   // schemaを参照するためにamplify/dataを追加
-  "include": ["src", "amplify/data/*", "amplify/function/*"],
+  "include": ["src", "amplify/data/*", "amplify/functions/*"],
 }
