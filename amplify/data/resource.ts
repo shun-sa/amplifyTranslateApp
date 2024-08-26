@@ -1,4 +1,4 @@
-import { type ClientSchema, a, defineData, defineFunction } from '@aws-amplify/backend';
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { registerMeeting } from '../functions/register-meeting/resource';
 //import { ChimeSDKMeetings } from '@aws-sdk/client-chime-sdk-meetings';
 
