@@ -61,24 +61,24 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
 
         if(speechRecognizer !== undefined) {
             // 音声認識の途中結果を取得
-            speechRecognizer.recognizing = (s, e) => {
+            speechRecognizer.recognizing = (_s, _e) => {
                 //console.log(`Recognizing: ${e.result.text}`);
             };
 
             // 音声認識が完了した際の処理
-            speechRecognizer.recognized = (s, e) => {
+            speechRecognizer.recognized = (_s, e) => {
                 //setSpeechText(e.result.text);
                 sendTranslate(e.result.text);
             };
 
             // 音声認識が中断された際の処理
-            speechRecognizer.canceled = (s, e) => {
+            speechRecognizer.canceled = (_s, e) => {
                 console.log(`Canceled: ${e.reason}`);
-                alert('音声認識が中断されました。翻訳ボタンを再度押下してください。');
+                //alert('音声認識が中断されました。翻訳ボタンを再度押下してください。');
             };
 
             // 音声認識セッションが終了したときの処理
-            speechRecognizer.sessionStopped = (s, e) => {
+            speechRecognizer.sessionStopped = (_s, _e) => {
                 console.log('Session stopped');
             };
 

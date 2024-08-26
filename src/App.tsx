@@ -1,5 +1,5 @@
 import './App.css'
-import Menu from './Menu'
+import Menu from './menu'
 
 import { Authenticator } from '@aws-amplify/ui-react'
 import '@aws-amplify/ui-react/styles.css';

@@ -71,10 +71,10 @@ function CreateMeeting() {
     }
 
     // ミーティングを削除
-    const deleteMeeting = async (meetingID: string) => {
-        await client.models.MeetingManagement.delete({id: meetingID});
-        fetchMeetings();
-    }
+    // const deleteMeeting = async (meetingID: string) => {
+    //     await client.models.MeetingManagement.delete({id: meetingID});
+    //     fetchMeetings();
+    // }
 
     return (
 
