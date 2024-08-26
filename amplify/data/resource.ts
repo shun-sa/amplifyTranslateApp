@@ -8,7 +8,6 @@ const schema = a.schema({
   MeetingManagement: a
     .model({
       id: a.string(),
-      meetingId: a.string().default('000000'),
       chimeMeetingInfo: a.json(),
       chimeMeetingStatus: a.string().default('unused'),
       meetingPassword: a.string(),
@@ -18,12 +17,10 @@ const schema = a.schema({
   registerMeeting: a
     .query()
     .arguments({
-      id: a.string().required(),
-      meetingId: a.string().required(),
       chimeMeetingInfo: a.json().required(),
       chimeMeetingStatus: a.string().required(),
     })
-    .returns(a.string())
+    .returns(a.json())
     .authorization((allow) => [allow.publicApiKey()])
     .handler(a.handler.function(registerMeeting)),
   // translateAPIを定義

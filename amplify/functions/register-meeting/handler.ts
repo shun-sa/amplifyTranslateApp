@@ -1,87 +1,72 @@
-//import { Handler } from 'aws-lambda';
-//import { Chime } from 'aws-sdk';
 import { Schema } from '../../data/resource';
-//import { useState } from 'react';
-import { generateClient } from 'aws-amplify/data';
-import { ChimeSDKMeetingsClient, CreateMeetingCommand, ListAttendeesCommand } from '@aws-sdk/client-chime-sdk-meetings';
+import { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand, CreateAttendeeCommandInput, CreateAttendeeCommandOutput } from '@aws-sdk/client-chime-sdk-meetings';
 
-//const [meetings, setMeetings] = useState<Schema['MeetingManagement']['type'][]>([]);
-
-// Chime設定
-// const chime = new Chime({
-//     region: 'us-east-1',
-//     endpoint: 'service.chime.aws.amazon.com',
-// });
-
-const client = new ChimeSDKMeetingsClient({ region: 'us-east-1' });
-
-let attendee: any;
+const chimeClient = new ChimeSDKMeetingsClient({ 
+    region: 'us-east-1',
+});
 
 export const handler: Schema['registerMeeting']['functionHandler'] = async (event) => {
 
-    const id = event.arguments.id;
-    const meetingId = event.arguments.meetingId;
-    const chimeMeetingInfo = event.arguments.chimeMeetingInfo;
+    const chimeMeetingInfo: any | undefined = event.arguments.chimeMeetingInfo;
     const chimeMeetingStatus = event.arguments.chimeMeetingStatus;
-
-    const meetingInfoResponse = await client.send(new CreateMeetingCommand({
-        ClientRequestToken: Date.now().toString(),
-        MediaRegion: 'ap-northeast-1',
-        ExternalMeetingId: 'your-external-meeting-id',
-    }));
-
-    //var meetingInfoObject = JSON.parse(meetingInfo);
-
-    return `Hello ${id}!`;
-
-    // if(event.meetingStatus === 'unused') {
-
-    //     // Schemaクライアントを生成
-    //     const client = generateClient<Schema>();
-
-    //     // ミーティングを作成
-    //     const meeting = await chime.createMeeting({
-    //         ClientRequestToken: Date.now().toString(),
-    //         MediaRegion: 'ap-northeast-1',
-    //     }).promise();
+    var meeting: any;
+    var attendee: CreateAttendeeCommandOutput | undefined;
 
 
-    //     // idをキーにして、ミーティングIDを更新
-    //     await client.models.MeetingManagement.update({
-    //         id: event.id,
-    //         meetingId: event.meetingId,
-    //         chimeMeetingInfo: meeting,
-    //         chimeMeetingStatus: 'using',
-    //     });
+    if(chimeMeetingStatus === 'unused') {
 
-    //     attendee = createMeeting(meeting);
+        // ミーティングを作成
+        const meetingInfoResponse = await chimeClient.send(
+            new CreateMeetingCommand({
+                ClientRequestToken: Date.now().toString(),
+                MediaRegion: 'ap-northeast-1',
+                ExternalMeetingId: 'test',
+        }));
 
-    //     // meetingとattendeeを返す
-    //     return { meeting: meeting, attendee: attendee };
-    // }
-    // else if(event.meetingStatus === 'using') {
-    //     attendee = createMeeting(event.chimeMeetingInfo);
+        meeting = meetingInfoResponse.Meeting;
 
-    //     // meetingとattendeeを返す
-    //     return { meeting: event.chimeMeetingInfo, attendee: attendee };
-    // }
-    // else {
-    //     // エラーを返す
-    //     return 'error';
-    // }
+        try {
+            // 参加者を作成
+            attendee = await createAttendee(meeting.MeetingId);
+        } catch (error) {
+            console.log(error);
+            return { meeting: error, attendee: error };
+        }
+
+        return { meeting: meeting, attendee: attendee };
+    }
+    else if(chimeMeetingStatus === 'using') {
+
+        try {
+            // 参加者を作成
+            attendee = await createAttendee(chimeMeetingInfo.MeetingId);
+        } catch (error) {
+            console.log(error);
+            return { meeting: error, attendee: error };
+        }
+
+        return { meeting: chimeMeetingInfo, attendee: attendee };
+    }
+
+    return { message: undefined, attendee: undefined };
 }
 
 // 参加者を作成
-async function createMeeting(chimeMeetingInfo: any) {
+async function createAttendee(meetingId : string | undefined) {
 
-    // const attendee = await chime.createAttendee({
-    //     MeetingId: chimeMeetingInfo.Meeting.MeetingId,
-    //     ExternalUserId: Date.now().toString(),
-    // }).promise();
+    var createAttendeeCommandInput : CreateAttendeeCommandInput = {
+        MeetingId: '',
+        ExternalUserId: '',
+    };
 
-    const attendee = await client.send(new ListAttendeesCommand({
-        MeetingId: chimeMeetingInfo.Meeting.MeetingId,
-    }));
+    // attendee取得のための入力情報を設定
+    createAttendeeCommandInput.MeetingId = meetingId;
+    createAttendeeCommandInput.ExternalUserId = Date.now().toString();
 
-    return attendee;
+    const attendeeInfoResponse : CreateAttendeeCommandOutput = await chimeClient.send(
+        new CreateAttendeeCommand(
+            createAttendeeCommandInput
+    ));
+
+    return attendeeInfoResponse;
 }

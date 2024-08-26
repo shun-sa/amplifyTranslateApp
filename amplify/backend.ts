@@ -36,12 +36,22 @@ translateDataSources.grantPrincipal.addToPrincipalPolicy(
   })
 );
 
+// ミーティング登録Lambda関数を取得
+const registerMeetingFunction = backend.registerMeeting.resources.lambda;
 
 // 認証済みユーザーのIAMロールを取得
 const authenticatedUserIamRole = backend.auth.resources.authenticatedUserIamRole;
 
 //認証済みユーザーにLambda関数を実行する権限を付与
-backend.registerMeeting.resources.lambda.grantInvoke(authenticatedUserIamRole);
+registerMeetingFunction.grantInvoke(authenticatedUserIamRole);
+
+// lambda関数にchime:CreateMeetingの権限を付与
+const statement = new PolicyStatement({
+  actions: ['chime:CreateMeeting', 'chime:CreateAttendee'],
+  resources: ['*'],
+});
+
+registerMeetingFunction.addToRolePolicy(statement); 
 
 //認証済みユーザーに翻訳機能を使用する権限を付与
 authenticatedUserIamRole.addToPrincipalPolicy(
@@ -50,6 +60,8 @@ authenticatedUserIamRole.addToPrincipalPolicy(
     resources: ['*'],
   })
 );
+
+
 
 //翻訳機能を追加
 backend.addOutput({

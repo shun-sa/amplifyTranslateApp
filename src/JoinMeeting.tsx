@@ -1,14 +1,9 @@
-import { Flex, View, Icon, TextField, Text, Button } from '@aws-amplify/ui-react';
-import { json, useNavigate } from 'react-router-dom';
-//import { Chime } from 'aws-sdk';
+import { Flex, View, Icon, TextField, Button } from '@aws-amplify/ui-react';
+import { useNavigate } from 'react-router-dom';
 import { type Schema } from '../amplify/data/resource';
 import { generateClient } from "aws-amplify/data";
 import { useEffect, useState} from "react";
-import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
-import { fetchAuthSession } from 'aws-amplify/auth';
 import { Buffer } from 'buffer';
-
-import outputs from '../amplify_outputs.json';
 
 export default function JoinMeeting() {
 
@@ -17,7 +12,11 @@ export default function JoinMeeting() {
 
     // 画面遷移設定
     const navigate = useNavigate();
-    const handleDeviceSetting  = (chimeMeetingInfo, attendee) => navigate('/deviceSetting', {state: {chimeMeetingInfo: chimeMeetingInfo, attendee: attendee}});
+    const handleDeviceSetting  = (meeting : string) => 
+        navigate('/deviceSetting', {state: {
+            meeting: meeting
+        }
+    });
 
     // Schemaクライアントを生成
     const client = generateClient<Schema>();
@@ -27,13 +26,11 @@ export default function JoinMeeting() {
     const [inputMeetingId, setInputMeetingId] = useState<string>('');
     const [inputMeetingPassword, setInputMeetingPassword] = useState<string>('');
 
-    // Chime設定
-    //let chime;
-
     // ミーティング一覧を取得
     const fetchMeetings = async () => {
         const {data: items, errors } = await client.models.MeetingManagement.list();
         setMeetings(items);
+        console.log(errors);
     }
 
     useEffect(() => {
@@ -48,7 +45,7 @@ export default function JoinMeeting() {
 
         // ミーティング番号とパスワードが一致するミーティングを探す
         for (const meeting of meetings) {
-            if (inputMeetingId === meeting.meetingId && inputMeetingPassword === meeting.meetingPassword) {
+            if (inputMeetingId === meeting.id && inputMeetingPassword === meeting.meetingPassword) {
                 if (meeting.chimeMeetingStatus === 'unused' || meeting.chimeMeetingStatus === 'using') {
                     // Lambda関数を呼び出す
                     invokeRegisterMeeting(meeting);
@@ -58,14 +55,6 @@ export default function JoinMeeting() {
                     alert('ミーティングが終了しています。');
                     return;
                 }
-                console.log(meeting.meetingId);
-                console.log(meeting.meetingPassword);
-                console.log(meeting.chimeMeetingStatus);
-                console.log(inputMeetingId);
-                console.log(inputMeetingPassword);
-                console.log(meeting.meetingId === inputMeetingId);
-                console.log(meeting.meetingPassword === inputMeetingPassword);
-                console.log(meeting.chimeMeetingStatus === 'unused');
             }
         }
 
@@ -75,92 +64,31 @@ export default function JoinMeeting() {
 
     // Chimeミーティング登録用のLambda関数を呼び出す
     async function invokeRegisterMeeting(meeting: any) {
-        var { credentials } = await fetchAuthSession();
 
-        var awsRegion = outputs.auth.aws_region;
-        //var functionName = outputs.custom.registerMeetingFunctionName;
-
-        // Lambda関数を呼び出す
-        var lambda = new LambdaClient({ credentials: credentials, region: awsRegion });
-
-        // var command = new InvokeCommand({
-        //     FunctionName: functionName,
-        //     Payload: Buffer.from(JSON.stringify({
-        //         id: meeting.id,
-        //         meetingId: meeting.meetingId,
-        //         meetingChimeInfo: meeting.chimeMeetingInfo,
-        //         meetingStatus: meeting.chimeMeetingStatus,
-        //     })),
-        // });
-
-        var meetingInfo = JSON.stringify({
-            id : meeting.id,
-            meetingId : meeting.meetingId,
-            meetingChimeInfo : meeting.chimeMeetingInfo,
-            meetingStatus : meeting.chimeMeetingStatus,
+        var apiResponse : any = await client.queries.registerMeeting({
+            chimeMeetingInfo: JSON.stringify({meeting: meeting.chimeMeetingInfo}),
+            chimeMeetingStatus: meeting.chimeMeetingStatus,
         });
 
+        console.log(meeting.chimeMeetingStatus);
 
-        var apiResponse = await client.queries.registerMeeting({
-            id: meeting.id,
-            meetingId: meeting.meetingId,
-            chimeMeetingInfo: meeting.chimeMeetingInfo,
-            chimeMeetingStatus: 'using',
-        });
-        console.log(apiResponse);
+        var stringResponse = JSON.parse(JSON.stringify(apiResponse.data));
 
-        // var apiResponse = await lambda.send(command);
+        // ミーティング情報を更新
+        if( JSON.stringify(stringResponse) !== '{}' && JSON.stringify(stringResponse) !== 'undefined') {
 
-        // // Lambda関数の戻り値を取得
-        // if (apiResponse.Payload) {
-        //     var payload = JSON.parse(new TextDecoder().decode(apiResponse.Payload));
-        //     console.log(payload.meeting);
-        //     //handleDeviceSetting(payload.meeting, payload.attendee);
-        // }
-        // else {
-        //     alert('通信が失敗しました。再度時間をおいてお試しください。');
-        // }
+            // ミーティング情報を更新
+            await client.models.MeetingManagement.update({
+                id: meeting.id,
+                chimeMeetingInfo: (JSON.parse(stringResponse)).meeting,
+                chimeMeetingStatus: 'using',
+            });
 
+            console.log('updated');
+        }
+
+        handleDeviceSetting(stringResponse);
     }
-
-    // chimeSDKを使ってミーティングを作成（最初の人がミーティング参加する際のみ起動。）
-    // async function createMeeting(id ,meetingId: string) {
-
-    //     chime = new Chime({
-    //         region: 'us-east-1',
-    //         endpoint: 'service.chime.aws.amazon.com',
-    //     });
-
-    //     // ミーティングを作成
-    //     var meeting = await chime.createMeeting({
-    //         ClientRequestToken: Date.now().toString(),
-    //         MediaRegion: 'ap-northeast-1',
-    //     }).promise();
-
-    //     // idをキーにして、ミーティングIDを更新
-    //     await client.models.MeetingManagement.update({
-    //         id: id,
-    //         meetingId: meetingId,
-    //         chimeMeetingInfo: meeting,
-    //         chimeMeetingStatus: 'using',
-    //     });
-
-    //     joinMeeting(meeting);
-    // }
-
-    // // ミーティングに参加
-    // async function joinMeeting(chimeMeetingInfo) {
-    //     // 参加者を作成
-    //     const attendee = await chime.createAttendee({
-    //         MeetingId: chimeMeetingInfo.Meeting.MeetingId,
-    //         ExternalUserId: Date.now().toString(),
-    //     }).promise();
-
-    //     // デバイス設定画面に遷移
-    //     handleDeviceSetting(chimeMeetingInfo, attendee);
-    // }
-
-
 
     return (
     <Flex

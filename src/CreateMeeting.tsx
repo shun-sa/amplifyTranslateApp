@@ -2,6 +2,7 @@ import { Flex, View, Text, Button, Icon, TextField } from '@aws-amplify/ui-react
 import { type Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
 import { useEffect, useState} from "react";
+import { useNavigate } from 'react-router-dom';
 
 function CreateMeeting() {
 
@@ -9,7 +10,11 @@ function CreateMeeting() {
 
     const [meetings, setMeetings] = useState<Schema['MeetingManagement']['type'][]>([]);
     const [createMeetingIdString, setCreateMeetingIdString] = useState<string>('');
-    const [inputMeetingPassword, setMeetingId] = useState<string>('default');
+    const [inputMeetingPassword, setMeetingPassword] = useState<string>('default');
+
+    // 画面遷移設定
+    const navigate = useNavigate();
+    const handleMenu = () => navigate('/');
 
     // ミーティング一覧を取得
     const fetchMeetings = async () => {
@@ -26,22 +31,43 @@ function CreateMeeting() {
     const createMeeting = async () => {
 
         // ミーティング情報を取得
-        fetchMeetings();
+        await fetchMeetings();
 
         // ミーティングIDを生成
-        meetings.map((meeting) => {
-            const createMeetingIdNumber = Number(meeting.meetingId) + 1;
+        if(meetings.length !== 0) {
+            // meeting.idの最大値を求める
+            const maxMeetingId = Math.max(...meetings.map((meeting) => Number(meeting.id)));
+
+            // 最大値に1を加えて新しいmeeting.idを生成
+            var createMeetingIdNumber = maxMeetingId+ 1;
+
+            // 6桁の文字列に変換
             setCreateMeetingIdString(createMeetingIdNumber.toString().padStart(6, '0'));
-        })
+        }
+        else {
+            setCreateMeetingIdString('000001');
+        }
+        console.log(meetings);
+        console.log(createMeetingIdString);
+        console.log(inputMeetingPassword);
 
-        // ミーティングを登録
-        await client.models.MeetingManagement.create({
-            meetingId: createMeetingIdString,
-            meetingPassword: inputMeetingPassword,
-        });
+        if (createMeetingIdString === '') {
+            alert('登録に失敗しました。もう一度登録を行ってください。');
+            return;
+        }
+        else {
+            // ミーティングを登録
+            await client.models.MeetingManagement.create({
+                id: createMeetingIdString,
+                meetingPassword: inputMeetingPassword,
+            });
 
+            // メニュー画面に遷移
+            handleMenu();
+        }
 
-        //deleteMeeting('7dd525df-7715-4504-ab26-4cbb154d398f');
+        // ミーティング削除（デバック用）
+        // deleteMeeting('000001');
     }
 
     // ミーティングを削除
@@ -101,7 +127,7 @@ function CreateMeeting() {
             placeholder=""
             isDisabled={false}
             labelHidden={false}
-            onChange={(event) => {setMeetingId(event.target.value)}}
+            onChange={(event) => {setMeetingPassword(event.target.value)}}
         />
         <Text
             fontFamily="Inter"
@@ -118,11 +144,6 @@ function CreateMeeting() {
         >
             ミーティングパスワードを入力してください。
         </Text>
-        <ul>
-            {meetings.map((meeting) => (
-                <li key={meeting.meetingId}>{meeting.meetingId}</li>
-            ))}
-        </ul>
         <ul>
             {meetings.map((meeting) => (
                 <li key={meeting.id}>{meeting.id}</li>

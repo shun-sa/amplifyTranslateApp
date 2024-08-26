@@ -1,25 +1,34 @@
 import { Flex, View, Icon, SelectField, Button } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // 引数受け取りのためのインターフェースを定義
 interface DeviceSettingProps {
-    meeting: Object; 
-    attendee: Object;
+    meeting: string; 
 }
 
-const DeviceSetting: React.FC<DeviceSettingProps> = (DeviceSettingProps) => {
+const DeviceSetting: React.FC<DeviceSettingProps> = () => {
     
     // マイクとスピーカーの一覧を保持する
     const [microphones, setMicrophones] = useState<string[]>([]);
     const [speakers, setSpeakers] = useState<string[]>([]);
+    const location = useLocation();
+
+    // ミーティング情報を取得
+    const meeting = location.state.meeting;
 
     // 選択されたマイクとスピーカーを保持する
     const [selectedMicrophone, setSelectedMicrophone] = useState<string>('');
     const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
 
     const navigate = useNavigate();
-    const handleMeetingDisplay = (selectedMicrophoneId, selectedSpeakerId) => navigate('/meeting', {state: {chimeMeetingInfo: DeviceSettingProps.meeting,attendee: DeviceSettingProps.attendee, selectedMicrophoneId: selectedMicrophoneId, selectedSpeakerId: selectedSpeakerId}});
+    const handleMeetingDisplay = (selectedMicrophoneId, selectedSpeakerId) => 
+        navigate('/meeting', {state: {
+            meeting: meeting, 
+            selectedMicrophoneId: selectedMicrophoneId, 
+            selectedSpeakerId: selectedSpeakerId
+        }
+    });
 
     // デバイスの一覧を保持する
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -40,6 +49,12 @@ const DeviceSetting: React.FC<DeviceSettingProps> = (DeviceSettingProps) => {
         // マイクとスピーカーのデバイスIDをコンソールに表示する（デバッグ用）
         console.log(selectedMicrophoneId);
         console.log(selectedSpeakerId);
+
+        // ミーティング情報をコンソールに表示する（デバッグ用）
+        console.log('DeviceSetting');
+        console.log(meeting);
+
+        console.log(JSON.parse(meeting));
 
         // マイクとスピーカーのデバイスIDを渡してミーティング画面に遷移する
         handleMeetingDisplay(selectedMicrophoneId, selectedSpeakerId);
