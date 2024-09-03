@@ -10,7 +10,7 @@ function CreateMeeting() {
 
     const [meetings, setMeetings] = useState<Schema['MeetingManagement']['type'][]>([]);
     const [createMeetingIdString, setCreateMeetingIdString] = useState<string>('');
-    const [inputMeetingPassword, setMeetingPassword] = useState<string>('default');
+    const [inputMeetingPassword, setMeetingPassword] = useState<string>('');
 
     // 画面遷移設定
     const navigate = useNavigate();
@@ -29,6 +29,11 @@ function CreateMeeting() {
 
     // ミーティングを作成
     const createMeeting = async () => {
+
+        if(inputMeetingPassword === '') {
+            alert('ミーティングパスワードを入力してください。');
+            return;
+        }
 
         // ミーティング情報を取得
         await fetchMeetings();
@@ -67,7 +72,7 @@ function CreateMeeting() {
         }
 
         // ミーティング削除（デバック用）
-        // deleteMeeting('000001');
+        //deleteMeeting('000004');
     }
 
     // ミーティングを削除

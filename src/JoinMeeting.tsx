@@ -30,7 +30,7 @@ export default function JoinMeeting() {
     const fetchMeetings = async () => {
         const {data: items, errors } = await client.models.MeetingManagement.list();
         setMeetings(items);
-        console.log(errors);
+        console.log('fetchMeetingError :' + errors);
     }
 
     useEffect(() => {
@@ -65,26 +65,36 @@ export default function JoinMeeting() {
     // Chimeミーティング登録用のLambda関数を呼び出す
     async function invokeRegisterMeeting(meeting: any) {
 
-        var apiResponse : any = await client.queries.registerMeeting({
-            chimeMeetingInfo: JSON.stringify({meeting: meeting.chimeMeetingInfo}),
+        const apiResponse = await client.queries.registerMeeting({
+            id: meeting.id,
+            chimeMeetingInfo: meeting.chimeMeetingInfo,
             chimeMeetingStatus: meeting.chimeMeetingStatus,
         });
 
-        console.log(meeting.chimeMeetingStatus);
+        console.log('id : ' + meeting.id);
+        console.log('chimeMeetingInfo : ' + meeting.chimeMeetingInfo);
+        console.log('chimeMeetingStatus : ' + meeting.chimeMeetingStatus);
 
-        var stringResponse = JSON.parse(JSON.stringify(apiResponse.data));
+        const stringResponse = JSON.parse(JSON.stringify(apiResponse.data));
+        
+        console.log('stringResponse : ' + stringResponse);
+        console.log(JSON.parse(stringResponse));
 
         // ミーティング情報を更新
-        if( JSON.stringify(stringResponse) !== '{}' && JSON.stringify(stringResponse) !== 'undefined') {
+        if( stringResponse !== null && stringResponse !== undefined && meeting.chimeMeetingStatus === 'unused') {
+
+            const meetingInfo = {
+                id: meeting.id,
+                chimeMeetingInfo: stringResponse,
+                chimeMeetingStatus: 'using',
+            }
+
 
             // ミーティング情報を更新
-            await client.models.MeetingManagement.update({
-                id: meeting.id,
-                chimeMeetingInfo: (JSON.parse(stringResponse)).meeting,
-                chimeMeetingStatus: 'using',
-            });
+            const { data: updatedMeeting , errors } = await client.models.MeetingManagement.update(meetingInfo);
 
-            console.log('updated');
+            console.log('updateMeeting : ' + updatedMeeting);
+            console.log('MeetingManagementUpdateError : ' + errors);
         }
 
         handleDeviceSetting(stringResponse);

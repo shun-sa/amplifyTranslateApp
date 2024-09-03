@@ -8,7 +8,7 @@ const schema = a.schema({
   MeetingManagement: a
     .model({
       id: a.string(),
-      chimeMeetingInfo: a.json(),
+      chimeMeetingInfo: a.string().default('meetingInfoDefault'),
       chimeMeetingStatus: a.string().default('unused'),
       meetingPassword: a.string(),
     })
@@ -17,7 +17,8 @@ const schema = a.schema({
   registerMeeting: a
     .query()
     .arguments({
-      chimeMeetingInfo: a.json().required(),
+      id: a.string().required(),
+      chimeMeetingInfo: a.string().required(),
       chimeMeetingStatus: a.string().required(),
     })
     .returns(a.json())

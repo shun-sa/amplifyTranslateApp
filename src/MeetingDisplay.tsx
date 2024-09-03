@@ -1,8 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { SpeechRecognizer, AudioConfig, SpeechConfig} from 'microsoft-cognitiveservices-speech-sdk';
 import { generateClient } from 'aws-amplify/data';
 import { type Schema } from '../amplify/data/resource';
-import { ConsoleLogger, DefaultDeviceController, DefaultMeetingSession, LogLevel, MeetingSessionConfiguration, MeetingSessionStatusCode } from 'amazon-chime-sdk-js'
+import { 
+    AudioVideoFacade,
+    ConsoleLogger, 
+    DefaultDeviceController, 
+    DefaultMeetingSession, 
+    LogLevel, 
+    MeetingSessionConfiguration, 
+    MeetingSessionStatusCode,
+    DataMessage
+} from 'amazon-chime-sdk-js'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,6 +21,7 @@ interface MeetingDisplayProps {
     meeting: string;
     selectedMicrophoneId: string;
     selectedSpeakerId: string;
+    participantName: string;
 }
 
 const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
@@ -22,12 +32,16 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     // 会話内容を保持
     const [speechText, setSpeechText] = useState<string>('');
 
+    // meetingSessionをuseRefで保持
+    const meetingSession = useRef<DefaultMeetingSession | null>(null);
+
     // DeviceSetting.tsxからの引数を取得
     const location = useLocation();
     const meeting = JSON.parse(location.state.meeting).meeting;
     const attendee = JSON.parse(location.state.meeting).attendee;
     const selectedMicrophoneId = location.state.selectedMicrophoneId;
     const selectedSpeakerId = location.state.selectedSpeakerId;
+    const participantName = location.state.participantName;
 
     // 画面遷移設定
     const navigate = useNavigate();
@@ -35,7 +49,6 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
 
     // 初回レンダリング時にSpeechToTextとChimeミーティングに参加する
     useEffect(() => {
-        console.log('useEffect called');
         invokeSendSpeechToText();
         joinChimeMeeting();
     }, []);
@@ -104,7 +117,8 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
                     targetLanguage: 'en'
                 });
                 if (data) {
-                    setSpeechText(prevText => prevText + '\n' + data);
+                    setSpeechText(prevText => prevText + '\n' + '[' + participantName + ' ] : ' + speakingText + ' (' + data + ')');
+                    sendDataMessage(`[${participantName} ] : ${speakingText} (${data})`);
                 }
                 console.log(speakingText);
             }
@@ -121,15 +135,44 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
         console.log('deviceController', deviceController);
 
         //ミーティングセッションの設定
-        var configuration = new MeetingSessionConfiguration(meeting, attendee);
-        var meetingSession = new DefaultMeetingSession(configuration, logger, deviceController);
+        const configuration = new MeetingSessionConfiguration(meeting, attendee);
+        meetingSession.current = new DefaultMeetingSession(configuration, logger, deviceController);     
 
+        // DataMessageを受信するリスナー
+        meetingSession.current.audioVideo.realtimeSubscribeToReceiveDataMessage('chat', (dataMessage: DataMessage) => {
+            if (dataMessage.text()) {
+            console.log('Received message: ', dataMessage.text());
+            // UIにメッセージを表示する処理など
+            setSpeechText(prevText => prevText + '\n' + dataMessage.text());
+            }
+        });
+
+        // AudioVideoFacadeを取得(たくさん使うのでコンパクトに宣言)
+        const audioVideo : AudioVideoFacade = meetingSession.current.audioVideo;
+
+        // デバイスのラベルを設定(オーディオの設定)
+        audioVideo.setDeviceLabelTrigger(async (): Promise<MediaStream> => {
+            return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        });
+
+        //const audioInputDevices = await audioVideo.listAudioInputDevices();
+
+        console.log('selectedMicrophoneId', selectedMicrophoneId);
+        console.log('selectedSpeakerId', selectedSpeakerId);
         // 入出力デバイスの設定
-        await meetingSession.audioVideo.startAudioInput(selectedMicrophoneId);
-        await meetingSession.audioVideo.chooseAudioOutput(selectedSpeakerId);
+        try {
+            await audioVideo.startAudioInput(selectedMicrophoneId);
+            await audioVideo.chooseAudioOutput(selectedSpeakerId);
+        } catch (error) {
+            console.log('startAudioError : ' +  error);
+        }
+        
+        // ミーティングセッションの音声をバインド
+        await audioVideo.bindAudioElement(document.getElementById('meeting-audio') as HTMLAudioElement);
+        
 
         // observerの設定
-        meetingSession.audioVideo.addObserver({
+        audioVideo.addObserver({
             audioVideoDidStart: () => {
                 console.log('audioVideoDidStart');
             },
@@ -142,9 +185,32 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
         });
 
         // ミーティングセッションを開始
-        await meetingSession.audioVideo.start();
+        audioVideo.start();
+
+        // ミーティングセッションのイベントを監視
+        audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present, externalUserId) => {
+            console.log('realtimeSubscribeToAttendeeIdPresence', attendeeId, present, externalUserId);
+        });
+
+        // ミーティングセッションの音量を監視
+        audioVideo.realtimeSubscribeToVolumeIndicator(attendee, (volume, muted) => {
+            console.log('realtimeSubscribeToVolumeIndicator', `音量: ${volume}, ミュート: ${muted}`);
+        });
+
         toast.success('会議を開始しました。');
     }
+
+    // DataMessageを送信する関数
+    function sendDataMessage(text: string) {
+        const topic = 'chat'; // トピック名
+        const lifetimeMs = 300000; // メッセージの生存時間（ミリ秒）
+        
+        // メッセージをバイト配列として送信
+        meetingSession.current?.audioVideo.realtimeSendDataMessage(topic, text, lifetimeMs);
+    }
+  
+    
+  
 
     // Chimeミーティングから退室する
     function leaveChimeMeeting() {
@@ -176,6 +242,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     return (
         <div>
             <div>
+                <audio id="meeting-audio" style={{ display: 'none' }}></audio>
                 <button onClick={handleMicrophoneToggle}>
                     {isMicrophoneOn ? 'Turn Microphone Off' : 'Turn Microphone On'}
                 </button>

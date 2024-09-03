@@ -12,7 +12,7 @@ export const AppRoutes = () => {
             <Route path='/' element={<App />} />
             <Route path='/createMeeting' element={<CreateMeeting />} />
             <Route path='/joinMeeting' element={<JoinMeeting />} />
-            <Route path='/meeting' element={<MeetingDisplay meeting={''} selectedMicrophoneId={''} selectedSpeakerId={''} />} />
+            <Route path='/meeting' element={<MeetingDisplay meeting={''} selectedMicrophoneId={''} selectedSpeakerId={''} participantName={''} />} />
             <Route path='/deviceSetting' element={<DeviceSetting meeting={''} />} />
             <Route path='*' element={<NotFound/>} />
         </Routes>

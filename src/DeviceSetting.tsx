@@ -1,4 +1,4 @@
-import { Flex, View, Icon, SelectField, Button } from '@aws-amplify/ui-react';
+import { Flex, View, Icon, SelectField, Button, TextField } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -21,12 +21,16 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
     const [selectedMicrophone, setSelectedMicrophone] = useState<string>('');
     const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
 
+     // 参加名を保持する
+     const [participantName, setParticipantName] = useState<string>('');
+
     const navigate = useNavigate();
-    const handleMeetingDisplay = (selectedMicrophoneId, selectedSpeakerId) => 
+    const handleMeetingDisplay = (selectedMicrophoneId , selectedSpeakerId) => 
         navigate('/meeting', {state: {
             meeting: meeting, 
             selectedMicrophoneId: selectedMicrophoneId, 
-            selectedSpeakerId: selectedSpeakerId
+            selectedSpeakerId: selectedSpeakerId,
+            participantName: participantName,
         }
     });
 
@@ -39,6 +43,12 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
         // マイクとスピーカーが選択されていない場合はアラートを表示する
         if (!selectedMicrophone || !selectedSpeaker) {
             alert('マイクとスピーカーを選択してください。');
+            return;
+        }
+
+        // 参加名が入力されていない場合はアラートを表示する
+        if (!participantName) {
+            alert('参加名を入力してください。');
             return;
         }
 
@@ -150,6 +160,19 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
                     </option>
                 ))}
             </SelectField>
+
+            <TextField
+                width="240px"
+                label="参加名"
+                placeholder="参加名を入力してください。"
+                position="absolute"
+                top="368px"
+                left="211px"
+                size="small"
+                isDisabled={false}
+                labelHidden={false}
+                value={participantName} onChange={(e: any) => setParticipantName(e.target.value)}
+            />
 
             <Button
             width="245px"
