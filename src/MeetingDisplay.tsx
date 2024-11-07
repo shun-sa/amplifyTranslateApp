@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Flex, Button, TextField } from '@aws-amplify/ui-react';
 import { SpeechRecognizer, AudioConfig, SpeechConfig} from 'microsoft-cognitiveservices-speech-sdk';
 import { generateClient } from 'aws-amplify/data';
 import { type Schema } from '../amplify/data/resource';
@@ -35,6 +36,9 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     // meetingSessionをuseRefで保持
     const meetingSession = useRef<DefaultMeetingSession | null>(null);
 
+    // スキーマを定義
+    const client = generateClient<Schema>();
+
     // DeviceSetting.tsxからの引数を取得
     const location = useLocation();
     const meeting = JSON.parse(location.state.meeting).meeting;
@@ -67,10 +71,12 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
         speechConfig.speechRecognitionLanguage = 'ja-JP';
 
         // マイクからの音声入力を取得する
-        var audioConfig = AudioConfig.fromMicrophoneInput(selectedMicrophoneId);
+        const audioConfig = AudioConfig.fromMicrophoneInput(selectedMicrophoneId);
+
         
         // 音声認識を行うSpeechRecognizerを生成
         const speechRecognizer = new SpeechRecognizer(speechConfig, audioConfig);
+        
 
         if(speechRecognizer !== undefined) {
             // 音声認識の途中結果を取得
@@ -107,8 +113,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
 
     // 翻訳APIを呼び出す
     async function sendTranslate(speakingText: string) {
-        // スキーマを定義
-        const client = generateClient<Schema>();
+        
         try{
             if(speakingText !== undefined && speakingText !== null && speakingText !== '') { 
                 const { data } = await client.queries.translate({
@@ -229,35 +234,45 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
             }
         };
         console.log(observer);
+
+        // menu画面に戻る
+        handleJoinMeeting();
     }
 
     const handleMicrophoneToggle = () => {
         setMicrophoneOn((prev) => !prev);
     };
 
-    const handleTranslationToggle = () => {
-        //setTranslationOn((prev) => !prev);
-    };
+    // const handleTranslationToggle = () => {
+    //     //setTranslationOn((prev) => !prev);
+    // };
 
     return (
-        <div>
+        <Flex direction="column" gap="2rem">
             <div>
                 <audio id="meeting-audio" style={{ display: 'none' }}></audio>
-                <button onClick={handleMicrophoneToggle}>
+                <Button onClick={handleMicrophoneToggle} style={{ marginRight: '1rem'}}>
                     {isMicrophoneOn ? 'Turn Microphone Off' : 'Turn Microphone On'}
-                </button>
+                </Button>
                 {/* <button onClick={invokeSendSpeechToText}>Send</button> */}
 
-                <button onClick={leaveChimeMeeting}>退室する</button>
-                <button onClick={handleTranslationToggle}>
-                    {/* {isTranslationOn ? 'Turn Translation Off' : 'Turn Translation On'} */}
-                </button>         
+                <Button onClick={leaveChimeMeeting}>退室する</Button>
+                {/* <Button onClick={handleTranslationToggle}>
+                    {isTranslationOn ? 'Turn Translation Off' : 'Turn Translation On'}
+                </Button>          */}
             </div>
-            <div>
-                <textarea value={speechText} readOnly/>
-            </div>
+
+            <TextField
+                label="会話内容"
+                // width='50vh'
+                labelHidden={true}
+                value={speechText}
+                readOnly
+                style={{ height: '50vh' ,width: '60vh' ,whiteSpace: 'pre-wrap'}} 
+            />
+
             <ToastContainer />
-        </div>
+        </Flex>
     );
 };
 

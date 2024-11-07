@@ -1,4 +1,4 @@
-import { Flex, View, Icon, TextField, Button } from '@aws-amplify/ui-react';
+import { Flex, TextField, Button } from '@aws-amplify/ui-react';
 import { useNavigate } from 'react-router-dom';
 import { type Schema } from '../amplify/data/resource';
 import { generateClient } from "aws-amplify/data";
@@ -102,59 +102,36 @@ export default function JoinMeeting() {
 
     return (
     <Flex
-        width="661px"
-        height="622px"
-        overflow="hidden"
-        position="relative"
-        backgroundColor="rgba(255,255,255,1)"
+        direction="column" 
+        alignItems="center" 
+        gap="3rem"
     >
-        <View
-            width="397px"
-            height="509px"
-            display="block"
-            position="absolute"
-            top="calc(50% - 254.5px - 28.5px)"
-            left="calc(50% - 198.5px - 0px)"
-            border="1px SOLID rgba(0,0,0,1)"
-            backgroundColor="rgba(217,217,217,0)"
-        />
-        <Icon
-            width="396px"
-            height="1px"
-            viewBox={{"minX":0,"minY":0,"width":396.0000002344659,"height":0.9999999316742105}}
-            paths={[{"d":"M0 0 L396.001 0 L396.001 -0.5 L0 -0.5 L0 0 Z","stroke":"rgba(0,0,0,1)","fillRule":"nonzero","strokeWidth":0}]}
-            display="block"
-            position="absolute"
-            top="98px"
-            left="133px"
-            transformOrigin="top left"
-            transform="rotate(0.14deg)"
-        />
         <TextField
-            width="329px"
-            label="ミーティングパスワードを入力してください。"
-            position="absolute"
-            top="calc(50% - 20px - -20px)"
-            left="25.11%"
-            right="25.11%"
-            placeholder=""
-            isDisabled={false}
-            labelHidden={false}
-            onChange={(event) => {setInputMeetingPassword(event.target.value)}}
-        />
-        <TextField
-            width="329px"
+            width="20rem"
             label="ミーティング番号を入力してください。"
-            position="absolute"
-            top="calc(50% - 20px - 71px)"
-            left="25.11%"
-            right="25.11%"
-            placeholder=""
             isDisabled={false}
             labelHidden={false}
             onChange={(event) => {setInputMeetingId(event.target.value)}}
         />
-        <Button onClick={checkMeetigInfomation}>ミーティングに参加</Button>
+        <TextField
+            width="20rem"
+            label="ミーティングパスワードを入力してください。"
+            
+            isDisabled={false}
+            labelHidden={false}
+            onChange={(event) => {setInputMeetingPassword(event.target.value)}}
+        />
+        
+        <Button 
+            width="15rem"
+            height="3rem"
+            shrink="0"
+            isDisabled={false}
+            variation="primary"
+            onClick={checkMeetigInfomation}
+        >
+            ミーティングに参加
+        </Button>
     </Flex>
     )
 }

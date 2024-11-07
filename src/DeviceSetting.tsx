@@ -1,4 +1,4 @@
-import { Flex, View, Icon, SelectField, Button, TextField } from '@aws-amplify/ui-react';
+import { Flex, SelectField, Button, TextField } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -93,41 +93,15 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
 
     return (
         <Flex
-            width="661px"
-            height="622px"
-            overflow="hidden"
-            position="relative"
-            backgroundColor="rgba(255,255,255,1)"
+            direction="column" 
+            alignItems="center" 
+            gap="4rem"
         >
-            <View
-                width="397px"
-                height="509px"
-                display="block"
-                position="absolute"
-                top="calc(50% - 254.5px - 28.5px)"
-                left="calc(50% - 198.5px - 0px)"
-                border="1px SOLID rgba(0,0,0,1)"
-                backgroundColor="rgba(217,217,217,0)"
-            />
-            <Icon
-                width="396px"
-                height="1px"
-                viewBox={{"minX":0,"minY":0,"width":396.0000002344659,"height":0.9999999316742105}}
-                paths={[{"d":"M0 0 L396.001 0 L396.001 -0.5 L0 -0.5 L0 0 Z","stroke":"rgba(0,0,0,1)","fillRule":"nonzero","strokeWidth":0}]}
-                display="block"
-                position="absolute"
-                top="98px"
-                left="133px"
-                transformOrigin="top left"
-                transform="rotate(0.14deg)"
-            />
+
             <SelectField
-                width="240px"
+                width="15rem"
                 label="マイク"
                 placeholder="マイクを選択してください。"
-                position="absolute"
-                top="150px"
-                left="211px"
                 size="small"
                 isDisabled={false}
                 labelHidden={false}
@@ -142,12 +116,9 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
             </SelectField>
 
             <SelectField
-                width="240px"
+                width="15rem"
                 label="スピーカー"
                 placeholder="スピーカーを選択してください。"
-                position="absolute"
-                top="259px"
-                left="211px"
                 size="small"
                 isDisabled={false}
                 labelHidden={false}
@@ -162,12 +133,9 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
             </SelectField>
 
             <TextField
-                width="240px"
+                width="15rem"
                 label="参加名"
                 placeholder="参加名を入力してください。"
-                position="absolute"
-                top="368px"
-                left="211px"
                 size="small"
                 isDisabled={false}
                 labelHidden={false}
@@ -175,8 +143,8 @@ const DeviceSetting: React.FC<DeviceSettingProps> = () => {
             />
 
             <Button
-            width="245px"
-            height="37px"
+            width="15rem"
+            height="3rem"
             shrink="0"
             isDisabled={false}
             variation="primary"

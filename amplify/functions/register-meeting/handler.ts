@@ -2,7 +2,7 @@ import { Schema } from '../../data/resource';
 import { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateMeetingCommandInput,CreateAttendeeCommand, CreateAttendeeCommandInput, CreateAttendeeCommandOutput } from '@aws-sdk/client-chime-sdk-meetings';
 
 const chimeClient = new ChimeSDKMeetingsClient({ 
-    region: 'us-east-1',
+    region: 'ap-northeast-1',
 });
 
 export const handler: Schema['registerMeeting']['functionHandler'] = async (event) => {
