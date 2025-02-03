@@ -30,13 +30,13 @@ function CreateMeeting() {
     // ミーティングを作成
     const createMeeting = async () => {
 
+        // ミーティング情報を取得
+        await fetchMeetings();
+
         if(inputMeetingPassword === '') {
             alert('ミーティングパスワードを入力してください。');
             return;
         }
-
-        // ミーティング情報を取得
-        await fetchMeetings();
 
         // ミーティングIDを生成
         if(meetings.length !== 0) {

@@ -11,7 +11,8 @@ import {
     LogLevel, 
     MeetingSessionConfiguration, 
     MeetingSessionStatusCode,
-    DataMessage
+    DataMessage,
+    VideoTileState
 } from 'amazon-chime-sdk-js'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -22,6 +23,7 @@ interface MeetingDisplayProps {
     meeting: string;
     selectedMicrophoneId: string;
     selectedSpeakerId: string;
+    selectedCameraId: string;
     participantName: string;
 }
 
@@ -45,6 +47,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     const attendee = JSON.parse(location.state.meeting).attendee;
     const selectedMicrophoneId = location.state.selectedMicrophoneId;
     const selectedSpeakerId = location.state.selectedSpeakerId;
+    const selectedCameraId = location.state.selectedCameraId;
     const participantName = location.state.participantName;
 
     // 画面遷移設定
@@ -157,17 +160,21 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
 
         // デバイスのラベルを設定(オーディオの設定)
         audioVideo.setDeviceLabelTrigger(async (): Promise<MediaStream> => {
-            return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         });
 
         //const audioInputDevices = await audioVideo.listAudioInputDevices();
 
         console.log('selectedMicrophoneId', selectedMicrophoneId);
         console.log('selectedSpeakerId', selectedSpeakerId);
+        console.log('selectedCameraId', selectedCameraId);
+
         // 入出力デバイスの設定
         try {
             await audioVideo.startAudioInput(selectedMicrophoneId);
             await audioVideo.chooseAudioOutput(selectedSpeakerId);
+            await audioVideo.startVideoInput(selectedCameraId);
+            
         } catch (error) {
             console.log('startAudioError : ' +  error);
         }
@@ -175,6 +182,12 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
         // ミーティングセッションの音声をバインド
         await audioVideo.bindAudioElement(document.getElementById('meeting-audio') as HTMLAudioElement);
         
+        // ミーティングセッションを開始
+        audioVideo.start();
+
+        // ミーティングセッションのビデオをバインド
+        audioVideo.startLocalVideoTile();
+        audioVideo.bindVideoElement(1, document.getElementById('localVideo') as HTMLVideoElement);
 
         // observerの設定
         audioVideo.addObserver({
@@ -187,10 +200,18 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
             audioVideoDidStartConnecting: (reconnecting) => {
                 console.log('audioVideoDidStartConnecting', reconnecting);
             },
+            videoTileDidUpdate: (tileState : VideoTileState) => {
+                if(!tileState.boundAttendeeId || !tileState.localTile) return;
+                const remoteVideoElement = document.getElementById('remoteVideo') as HTMLVideoElement;
+                if (tileState.tileId !== null) {
+                    audioVideo.bindVideoElement(tileState.tileId, remoteVideoElement);
+                }
+            }
         });
 
-        // ミーティングセッションを開始
-        audioVideo.start();
+        
+
+        
 
         // ミーティングセッションのイベントを監視
         audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present, externalUserId) => {
@@ -248,7 +269,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     // };
 
     return (
-        <Flex direction="column" gap="2rem">
+        <Flex direction="column" gap="2rem" marginTop="4rem">
             <div>
                 <audio id="meeting-audio" style={{ display: 'none' }}></audio>
                 <Button onClick={handleMicrophoneToggle} style={{ marginRight: '1rem'}}>
@@ -270,6 +291,9 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
                 readOnly
                 style={{ height: '50vh' ,width: '60vh' ,whiteSpace: 'pre-wrap'}} 
             />
+
+            <video id="localVideo" autoPlay playsInline></video>
+            <video id="remoteVideo" autoPlay playsInline></video>
 
             <ToastContainer />
         </Flex>
