@@ -5,7 +5,7 @@ import { NotFound } from './NotFound';
 import MeetingDisplay from './MeetingDisplay';
 import DeviceSetting from './DeviceSetting';
 import JoinMeeting from './JoinMeeting';
-import Menu from './Menu';
+import Menu from './menu';
 
 export const AppRoutes = () => {
     return (
