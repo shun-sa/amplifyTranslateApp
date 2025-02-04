@@ -35,6 +35,10 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
     // 会話内容を保持
     const [speechText, setSpeechText] = useState<string>('');
 
+    // ビデオタイルを保持
+    const [videoTiles, setVideoTiles] = useState<number[]>([]);
+    const [localTileId, setLocalTileId] = useState<number | null>(null);
+
     // meetingSessionをuseRefで保持
     const meetingSession = useRef<DefaultMeetingSession | null>(null);
 
@@ -187,7 +191,7 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
 
         // ミーティングセッションのビデオをバインド
         audioVideo.startLocalVideoTile();
-        audioVideo.bindVideoElement(1, document.getElementById('localVideo') as HTMLVideoElement);
+        //audioVideo.bindVideoElement(1, document.getElementById('localVideo') as HTMLVideoElement);
 
         // observerの設定
         audioVideo.addObserver({
@@ -201,11 +205,37 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
                 console.log('audioVideoDidStartConnecting', reconnecting);
             },
             videoTileDidUpdate: (tileState : VideoTileState) => {
-                if(!tileState.boundAttendeeId || tileState.localTile) return;
-                console.log('videoTileDidUpdate', tileState);
-                const remoteVideoElement = document.getElementById('remoteVideo') as HTMLVideoElement;
-                if (tileState.tileId !== null) {
-                    audioVideo.bindVideoElement(tileState.tileId, remoteVideoElement);
+                // 参加者のビデオタイルを取得
+                if (!tileState.boundAttendeeId) return;
+
+                // ビデオタイルのIDを取得
+                if (tileState.localTile) {
+                    setLocalTileId(tileState.tileId);
+                } else {
+                    
+                    setVideoTiles(prev => {
+                        if (tileState.tileId !== null && !prev.includes(tileState.tileId)) {
+                            return [...prev, tileState.tileId];
+                        }
+                        return prev;
+                    });
+                }
+
+                // ビデオのバインド処理
+                setTimeout(() => {
+                    const videoElement = document.getElementById(`video-${tileState.tileId}`) as HTMLVideoElement;
+                    if (videoElement) {
+                        if (tileState.tileId !== null) {
+                            audioVideo.bindVideoElement(tileState.tileId, videoElement);
+                        }
+                    }
+                }, 0);
+
+            },
+            videoTileWasRemoved: (tileId: number) => {
+                setVideoTiles(prev => prev.filter(id => id !== tileId));
+                if (localTileId === tileId) {
+                    setLocalTileId(null);
                 }
             }
         });
@@ -293,8 +323,26 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
                 style={{ height: '50vh' ,width: '60vh' ,whiteSpace: 'pre-wrap'}} 
             />
 
-            <video id="localVideo" autoPlay playsInline></video>
-            <video id="remoteVideo" autoPlay playsInline></video>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {localTileId !== null && (
+                    <video
+                        key={localTileId}
+                        id={`video-${localTileId}`}
+                        autoPlay
+                        playsInline
+                        style={{ width: '200px', height: '150px', backgroundColor: 'black' }}
+                    ></video>
+                )}
+                {videoTiles.map(tileId => (
+                    <video
+                        key={tileId}
+                        id={`video-${tileId}`}
+                        autoPlay
+                        playsInline
+                        style={{ width: '200px', height: '150px', backgroundColor: 'black' }}
+                    ></video>
+                ))}
+            </div>
 
             <ToastContainer />
         </Flex>
