@@ -201,7 +201,8 @@ const MeetingDisplay: React.FC<MeetingDisplayProps> = () => {
                 console.log('audioVideoDidStartConnecting', reconnecting);
             },
             videoTileDidUpdate: (tileState : VideoTileState) => {
-                if(!tileState.boundAttendeeId || !tileState.localTile) return;
+                if(!tileState.boundAttendeeId || tileState.localTile) return;
+                console.log('videoTileDidUpdate', tileState);
                 const remoteVideoElement = document.getElementById('remoteVideo') as HTMLVideoElement;
                 if (tileState.tileId !== null) {
                     audioVideo.bindVideoElement(tileState.tileId, remoteVideoElement);
